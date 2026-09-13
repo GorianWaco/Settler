@@ -34,7 +34,7 @@ import pwd
 # WERSJA
 # ──────────────────────────────────────────────────────────────
 
-VERSION = "1.11"
+VERSION = "1.10"
 
 # ──────────────────────────────────────────────────────────────
 # CSS GLOBALNY
@@ -60,17 +60,15 @@ preferencespage,
 adw-preferences-page,
 clamp,
 adw-clamp,
+scrolledwindow,
+viewport,
+box,
+grid,
 .settler-root,
 .settler-bg {
     background-color: @window_bg_color !important;
     background-image: none !important;
     box-shadow: none;
-}
-
-/* Nie celujemy w box/scrolledwindow/viewport: w GTK 4.22 pole hasła
-   ma je w środku i zwija się wtedy do jednej kropki. */
-entry, password-entry, textview.text, row.entry {
-    min-width: 16em;
 }
 
 .settler-root {
@@ -326,7 +324,7 @@ class AskPasswordDialog(Adw.Dialog):
     def __init__(self, callback, on_cancel=None):
         super().__init__()
         self.set_title("Uwierzytelnienie")
-        self.set_content_width(420)
+        self.set_content_width(380)
         self.callback = callback
         self.on_cancel = on_cancel
         self._password = None
@@ -339,8 +337,8 @@ class AskPasswordDialog(Adw.Dialog):
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         vbox.set_margin_top(20)
         vbox.set_margin_bottom(20)
-        vbox.set_margin_start(16)
-        vbox.set_margin_end(16)
+        vbox.set_margin_start(20)
+        vbox.set_margin_end(20)
 
         icon = Gtk.Image.new_from_icon_name('dialog-password-symbolic')
         icon.set_pixel_size(48)
@@ -353,24 +351,16 @@ class AskPasswordDialog(Adw.Dialog):
         subtitle = Gtk.Label(label="Podaj hasło użytkownika aby zainstalować pakiety.")
         subtitle.add_css_class('dim-label')
         subtitle.set_wrap(True)
-        subtitle.set_justify(Gtk.Justification.CENTER)
         subtitle.set_max_width_chars(40)
         vbox.append(subtitle)
 
-        group = Adw.PreferencesGroup()
-        self.entry = Adw.PasswordEntryRow()
-        self.entry.set_title("Hasło")
-        # FREE_FORM + PRIVATE: InputPurpose.PASSWORD + IBus na GTK 4.22
-        # potrafiły przyjąć / pokazać tylko jeden znak.
-        self.entry.set_input_hints(
-            Gtk.InputHints.NO_EMOJI
-            | Gtk.InputHints.NO_SPELLCHECK
-            | Gtk.InputHints.PRIVATE
-        )
-        self.entry.set_input_purpose(Gtk.InputPurpose.FREE_FORM)
-        self.entry.connect('entry-activated', self._on_ok)
-        group.add(self.entry)
-        vbox.append(group)
+        # GTK 4.22 PasswordEntry nie ma set_placeholder_text — używamy Entry.
+        self.entry = Gtk.Entry()
+        self.entry.set_visibility(False)
+        self.entry.set_placeholder_text("Hasło...")
+        self.entry.set_input_purpose(Gtk.InputPurpose.PASSWORD)
+        self.entry.connect('activate', self._on_ok)
+        vbox.append(self.entry)
 
         btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         btn_box.set_halign(Gtk.Align.END)
@@ -1712,7 +1702,8 @@ class SettlerWindow(Adw.ApplicationWindow):
             window, .background, adw-application-window,
             .settler-root, .settler-bg,
             overlay-split-view, toolbar-view,
-            preferencespage, clamp {
+            preferencespage, clamp, scrolledwindow, viewport,
+            box, grid {
                 background-color: @window_bg_color !important;
                 background-image: none !important;
             }
@@ -1784,7 +1775,7 @@ class SettlerApp(Adw.Application):
                     r.append(
                         f'window, .background, adw-application-window, .settler-root, .settler-bg, '
                         f'adw-overlay-split-view, adw-toolbar-view, overlay-split-view, toolbar-view, '
-                        f'preferencespage, clamp '
+                        f'preferencespage, clamp, viewport, box, grid '
                         f'{{ background-color: {c} !important; background-image: none !important; }}'
                     )
                 if 'window_fg_color' in saved:
