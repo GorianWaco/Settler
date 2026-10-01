@@ -29,13 +29,12 @@ import os
 import glob
 import sys
 import pwd
-import time
 
 # ──────────────────────────────────────────────────────────────
 # WERSJA
 # ──────────────────────────────────────────────────────────────
 
-VERSION = "1.14"
+VERSION = "1.11"
 
 # ──────────────────────────────────────────────────────────────
 # CSS GLOBALNY
@@ -122,10 +121,6 @@ entry, password-entry, textview.text, row.entry {
 
 .tag-pacman { background: @blue_3; color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.7em; }
 .tag-aur    { background: @purple_3; color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.7em; }
-.tag-flatpak { background: @orange_3; color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.7em; }
-.tag-github { background: @green_5; color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.7em; }
-.tag-grok   { background: @yellow_5; color: black; border-radius: 4px; padding: 2px 6px; font-size: 0.7em; }
-.tag-unavailable { background: @red_3; color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.7em; }
 .installed-badge { background: @green_3; color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.7em; }
 """
 
@@ -133,159 +128,58 @@ entry, password-entry, textview.text, row.entry {
 # DANE
 # ──────────────────────────────────────────────────────────────
 
-# source: pacman | aur | flatpak | github | grok | settler | unavailable
-# pkgs: paczki pacman/AUR. prep: paczki dokładane do pacmana przed skryptem GitHub.
-# extra: photogimp | openrazer — krok po paczkach.
 PROGRAMS = [
-    {"id": "brave", "name": "Brave", "group": "Programy", "source": "pacman",
-     "pkgs": ["brave-bin"], "desc": "Przeglądarka skupiona na prywatności"},
-    {"id": "discord", "name": "Discord", "group": "Programy", "source": "pacman",
-     "pkgs": ["discord"], "desc": "Komunikator głosowy i tekstowy"},
-    {"id": "spotify", "name": "Spotify", "group": "Programy", "source": "aur",
-     "pkgs": ["spotify"], "desc": "Streaming muzyki"},
-    {"id": "vscode", "name": "Visual Studio Code", "group": "Programy", "source": "aur",
-     "pkgs": ["visual-studio-code-bin"], "desc": "Edytor kodu Microsoft"},
-    {"id": "libreoffice", "name": "LibreOffice", "group": "Programy", "source": "pacman",
-     "pkgs": ["libreoffice-fresh"], "desc": "Pakiet biurowy"},
-    {"id": "vlc", "name": "VLC", "group": "Programy", "source": "pacman",
-     "pkgs": ["vlc"], "desc": "Odtwarzacz multimedialny"},
-    {"id": "gimp", "name": "GIMP", "group": "Programy", "source": "pacman",
-     "pkgs": ["gimp"], "extra": "photogimp",
-     "desc": "Edytor grafiki. Lokalny skrót PhotoGIMP uruchamia ten sam program"},
-    {"id": "krita", "name": "Krita", "group": "Programy", "source": "pacman",
-     "pkgs": ["krita"], "desc": "Rysowanie i malowanie"},
-    {"id": "ardour", "name": "Ardour", "group": "Programy", "source": "pacman",
-     "pkgs": ["ardour"], "desc": "DAW — nagrywanie i miks"},
-    {"id": "mixxx", "name": "Mixxx", "group": "Programy", "source": "pacman",
-     "pkgs": ["mixxx"], "desc": "Oprogramowanie DJ"},
-    {"id": "lmstudio", "name": "LM Studio", "group": "Programy", "source": "aur",
-     "pkgs": ["lmstudio-bin"], "desc": "Lokalne modele językowe"},
-    {"id": "warp", "name": "Warp", "group": "Programy", "source": "aur",
-     "pkgs": ["warp-terminal-bin"], "desc": "Terminal Warp"},
-    {"id": "warp-client", "name": "Cloudflare One Client", "group": "Programy", "source": "pacman",
-     "pkgs": ["cloudflare-warp-bin"], "desc": "Klient WARP"},
-    {"id": "openrazer", "name": "Polychromatic i OpenRazer", "group": "Programy", "source": "aur",
-     "pkgs": ["polychromatic", "openrazer-meta-git"], "extra": "openrazer",
-     "desc": "Podświetlenie Razer. Po instalacji przeloguj się, żeby grupy zaczęły działać"},
-    {"id": "wivrn", "name": "WiVRn", "group": "Programy", "source": "aur",
-     "pkgs": ["wivrn-dashboard", "wivrn-server", "xrizer", "xrizer-common",
-              "lib32-wivrn-server", "lib32-xrizer"],
-     "desc": "Serwer, panel, xrizer i biblioteki 32-bit. Potem przeloguj się, żeby Steam zobaczył VR"},
-
-    {"id": "gamemode", "name": "GameMode", "group": "Gry", "source": "pacman",
-     "pkgs": ["gamemode"], "desc": "Optymalizacja systemu dla gier"},
-    {"id": "mangohud", "name": "MangoHud", "group": "Gry", "source": "pacman",
-     "pkgs": ["mangohud"], "desc": "Overlay FPS, GPU i CPU"},
-    {"id": "wine", "name": "Wine", "group": "Gry", "source": "pacman",
-     "pkgs": ["wine"], "desc": "Uruchamianie programów Windows"},
-    {"id": "winetricks", "name": "Winetricks", "group": "Gry", "source": "pacman",
-     "pkgs": ["winetricks"], "desc": "Skrypty konfiguracji Wine"},
-    {"id": "oversteer", "name": "Oversteer", "group": "Gry", "source": "aur",
-     "pkgs": ["oversteer"], "desc": "Konfiguracja kierownicy"},
-    {"id": "btop", "name": "btop", "group": "Gry", "source": "pacman",
-     "pkgs": ["btop"], "desc": "Monitor systemu w terminalu"},
-    {"id": "protonup", "name": "ProtonUp-Qt", "group": "Gry", "source": "pacman",
-     "pkgs": ["protonup-qt"], "desc": "Manager wersji GE-Proton"},
-    {"id": "lutris", "name": "Lutris", "group": "Gry", "source": "pacman",
-     "pkgs": ["lutris"], "desc": "Manager gier Linux"},
-    {"id": "heroic", "name": "Heroic Games", "group": "Gry", "source": "pacman",
-     "pkgs": ["heroic-games-launcher"], "desc": "Launcher Epic Games i GOG"},
-    {"id": "steam", "name": "Steam", "group": "Gry", "source": "pacman",
-     "pkgs": ["steam"], "desc": "Platforma Valve. Wymaga włączonego repozytorium multilib"},
-    {"id": "grok", "name": "Grok Build", "group": "Gry", "source": "grok",
-     "prep": ["curl"], "desc": "Oficjalny instalator xAI. Polecenie: grok"},
-
-    {"id": "tuxguitar", "name": "TuxGuitar", "group": "Flatpak", "source": "flatpak",
-     "flatpak": "ar.com.tuxguitar.TuxGuitar", "desc": "Edytor tabulatur, Flathub"},
-    {"id": "firestorm", "name": "Firestorm Viewer", "group": "Flatpak", "source": "flatpak",
-     "flatpak": "org.firestormviewer.FirestormViewer", "desc": "Przeglądarka Second Life, Flathub"},
-    {"id": "extension-manager", "name": "Menedżer rozszerzeń", "group": "Flatpak", "source": "flatpak",
-     "flatpak": "com.mattjakeman.ExtensionManager", "desc": "Instalacja rozszerzeń GNOME, Flathub"},
-    {"id": "wallora", "name": "Wallora 2", "group": "Flatpak", "source": "github",
-     "github": "wallora", "prep": ["curl", "flatpak"],
-     "desc": "Animowana tapeta. Flatpak z wydań GitHub"},
-    {"id": "lustro", "name": "Lustro", "group": "Flatpak", "source": "github",
-     "github": "lustro", "prep": ["curl", "flatpak"],
-     "desc": "Kopia folderów na drugi dysk. Flatpak z wydań GitHub"},
-    {"id": "flatpak-builder", "name": "Flatpak Builder", "group": "Flatpak", "source": "flatpak",
-     "flatpak": "org.flatpak.Builder", "desc": "Narzędzie do budowania paczek Flatpak"},
-
-    {"id": "kontur", "name": "Kontur", "group": "GitHub", "source": "github",
-     "github": "kontur",
-     "prep": ["git", "python", "python-gobject", "gtk4", "libadwaita", "gobject-introspection"],
-     "desc": "Motyw GTK. Instalacja z github.com/GorianWaco/kontur"},
-    {"id": "perun", "name": "Perun", "group": "GitHub", "source": "github",
-     "github": "perun",
-     "prep": ["git", "python", "python-gobject", "gtk4", "libadwaita", "python-vdf"],
-     "desc": "Instalacja native z github.com/GorianWaco/perun"},
-    {"id": "ogniwo", "name": "Ogniwo", "group": "GitHub", "source": "github",
-     "github": "ogniwo",
-     "prep": ["git", "python-gobject", "python-cairo", "gtk4", "libadwaita", "gtk3", "libnotify"],
-     "desc": "Bateria myszy Razer. Instalacja z github.com/GorianWaco/ogniwo"},
-    {"id": "razer-reactive", "name": "Razer Reactive", "group": "GitHub", "source": "github",
-     "github": "razer", "prep": ["git"],
-     "desc": "Instalacja z GitHuba. Skrypt potrzebuje uprawnień i dopisuje grupy"},
-    {"id": "lovense", "name": "Lovense Controller", "group": "GitHub", "source": "github",
-     "github": "lovense",
-     "prep": ["curl", "git", "python", "python-gobject", "gtk4", "python-cairo",
-              "gobject-introspection", "bluez", "bluez-utils", "pipewire",
-              "pipewire-audio", "libpulse", "pipewire-pulse"],
-     "desc": "Instalacja native z github.com/GorianWaco/max2-controller"},
-    {"id": "klucznik", "name": "Klucznik", "group": "GitHub", "source": "github",
-     "github": "klucznik",
-     "prep": ["git", "python", "python-gobject", "python-cairo", "gtk4", "libadwaita"],
-     "desc": "Sejf FIDO2 i GNOME Keyring. Instalacja z github.com/GorianWaco/klucznik"},
-    {"id": "iskra", "name": "Iskra", "group": "GitHub", "source": "unavailable",
-     "desc": "Brak repozytorium. Dysk ze źródłami nie jest podmontowany"},
-    {"id": "gitadder", "name": "GITADDER", "group": "GitHub", "source": "github",
-     "github": "gitadder",
-     "prep": ["git", "github-cli", "python", "python-gobject", "libadwaita", "gtk4"],
-     "desc": "Klon z GitHuba, potem lokalny instalator. Logowanie gh zostaje osobno"},
-    {"id": "settler", "name": "Settler", "group": "GitHub", "source": "settler",
-     "desc": "Ten program. Na nowym systemie wklej komendę z przycisku kopiowania",
-     "copy": "curl -fsSL https://raw.githubusercontent.com/GorianWaco/Settler/main/install.sh | bash"},
-    {"id": "focusrite", "name": "Focusrite Monitor", "group": "GitHub", "source": "github",
-     "github": "focusrite",
-     "prep": ["git", "python-gobject", "gtk4", "libadwaita", "gtk3", "alsa-utils", "pipewire-pulse"],
-     "desc": "Instalacja użytkownika z github.com/GorianWaco/focusrite-monitor"},
+    {"name": "Steam",             "pkg": "steam",                      "desc": "Platforma gamingowa Valve",           "source": "pacman"},
+    {"name": "Brave Browser",     "pkg": "brave-bin",                  "desc": "Przeglądarka skupiona na prywatności","source": "aur"},
+    {"name": "Firefox",           "pkg": "firefox",                    "desc": "Przeglądarka Mozilla",               "source": "pacman"},
+    {"name": "VLC",               "pkg": "vlc",                        "desc": "Odtwarzacz multimedialny",           "source": "pacman"},
+    {"name": "Discord",           "pkg": "discord",                    "desc": "Komunikator głosowy i tekstowy",     "source": "pacman"},
+    {"name": "Spotify",           "pkg": "spotify",                    "desc": "Streaming muzyki",                   "source": "aur"},
+    {"name": "OBS Studio",        "pkg": "obs-studio",                 "desc": "Nagrywanie i streaming",             "source": "pacman"},
+    {"name": "GIMP",              "pkg": "gimp",                       "desc": "Edytor grafiki rastrowej",           "source": "pacman"},
+    {"name": "Kdenlive",          "pkg": "kdenlive",                   "desc": "Edytor wideo",                       "source": "pacman"},
+    {"name": "VS Code",           "pkg": "visual-studio-code-bin",     "desc": "Edytor kodu Microsoft",              "source": "aur"},
+    {"name": "Heroic Games",      "pkg": "heroic-games-launcher-bin",  "desc": "Launcher Epic Games / GOG",          "source": "aur"},
+    {"name": "Lutris",            "pkg": "lutris",                     "desc": "Manager gier Linux",                 "source": "pacman"},
+    {"name": "ProtonUp-Qt",       "pkg": "protonup-qt",                "desc": "Manager wersji GE-Proton",           "source": "aur"},
+    {"name": "LibreOffice",       "pkg": "libreoffice-fresh",          "desc": "Pakiet biurowy open source",         "source": "pacman"},
+    {"name": "btop",              "pkg": "btop",                       "desc": "Monitor systemu (terminal)",         "source": "pacman"},
+    {"name": "Ardour",            "pkg": "ardour",                     "desc": "DAW — Digital Audio Workstation",    "source": "pacman"},
+    {"name": "Mixxx",             "pkg": "mixxx",                      "desc": "Oprogramowanie DJ",                  "source": "pacman"},
+    {"name": "Firestorm",         "pkg": "firestorm-bin",              "desc": "Przeglądarka Second Life",           "source": "aur"},
+    {"name": "OpenRGB",           "pkg": "openrgb",                    "desc": "Kontrola podświetlenia RGB",         "source": "aur"},
+    {"name": "Flatpak",           "pkg": "flatpak",                    "desc": "System pakietów sandboxed",          "source": "pacman"},
+    {"name": "GameMode",          "pkg": "gamemode",                   "desc": "Optymalizacja systemu dla gier",     "source": "pacman"},
+    {"name": "MangoHud",          "pkg": "mangohud",                   "desc": "Overlay FPS/GPU/CPU w grach",        "source": "pacman"},
+    {"name": "Wine",              "pkg": "wine",                       "desc": "Uruchamianie programów Windows",     "source": "pacman"},
+    {"name": "Winetricks",        "pkg": "winetricks",                 "desc": "Skrypty konfiguracji Wine",          "source": "pacman"},
+    {"name": "Oversteer",         "pkg": "oversteer",                  "desc": "Konfiguracja kierownicy Logitech",   "source": "aur"},
 ]
 
 EXTENSIONS = [
-    {"uuid": "advanced-weather@sanjai.com", "name": "Advanced Weather Companion",
-     "desc": "Pogoda w panelu", "active": True},
-    {"uuid": "auto-move-windows@gnome-shell-extensions.gcampax.github.com", "name": "Auto Move Windows",
-     "desc": "Automatyczne przenoszenie okien", "active": True},
-    {"uuid": "blur-my-shell@aunetx", "name": "Blur my Shell",
-     "desc": "Rozmycie powłoki", "active": True},
-    {"uuid": "burn-my-windows@schneegans.github.com", "name": "Burn My Windows",
-     "desc": "Animacje otwierania i zamykania okien", "active": True},
-    {"uuid": "compiz-windows-effect@hermes83.github.com", "name": "Compiz windows effect",
-     "desc": "Efekt galaretki okien", "active": True},
-    {"uuid": "dash-to-panel@jderose9.github.com", "name": "Dash to Panel",
-     "desc": "Panel z ulubionymi i oknami", "active": True},
-    {"uuid": "ddterm@amezin.github.com", "name": "ddterm",
-     "desc": "Terminal wysuwany z panelu", "active": True},
-    {"uuid": "ding@rastersoft.com", "name": "Desktop Icons NG (DING)",
-     "desc": "Ikony na pulpicie", "active": True},
-    {"uuid": "fq@megh", "name": "Force Quit",
-     "desc": "Zamykanie zawieszonego okna", "active": True},
-    {"uuid": "freon@UshakovVasilii_Github.yahoo.com", "name": "Freon",
-     "desc": "Temperatury w panelu", "active": True},
-    {"uuid": "gamemodeshellextension@trsnaqe.com", "name": "GameMode Shell Extension",
-     "desc": "Wskaźnik GameMode", "active": True},
-    {"uuid": "gnome-ui-tune@itstime.tech", "name": "Gnome 4x, 5x UI Improvements",
-     "desc": "Poprawki wyglądu GNOME", "active": True},
-    {"uuid": "iskra-dropdown@gorian", "name": "Iskra drop-down",
-     "desc": "Okno Iskry z panelu. Klon z github.com/GorianWaco/iskra-dropdown",
-     "active": True, "source": "github"},
-    {"uuid": "show-desktop-button@amivaleo", "name": "Show Desktop Button",
-     "desc": "Przycisk pokazania pulpitu", "active": True},
-    {"uuid": "trayIconsReloaded@selfmade.pl", "name": "Tray Icons: Reloaded",
-     "desc": "Ikony zasobnika", "active": True},
-    {"uuid": "user-theme@gnome-shell-extensions.gcampax.github.com", "name": "User Themes",
-     "desc": "Własne motywy powłoki", "active": True},
-    {"uuid": "vertical-workspaces@G-dH.github.com", "name": "V-Shell",
-     "desc": "Pionowy przełącznik przestrzeni roboczych", "active": True},
+    {"uuid": "user-theme@gnome-shell-extensions.gcampax.github.com",     "name": "User Themes",         "desc": "Własne motywy Shell",           "active": True},
+    {"uuid": "show-desktop-button@amivaleo",                              "name": "Show Desktop Button", "desc": "Przycisk pokaż pulpit",         "active": True},
+    {"uuid": "ding@rastersoft.com",                                       "name": "Desktop Icons NG",    "desc": "Ikony na pulpicie",              "active": True},
+    {"uuid": "burn-my-windows@schneegans.github.com",                     "name": "Burn My Windows",     "desc": "Animacje otwierania okien",      "active": True},
+    {"uuid": "lockkeys@vaina.lt",                                         "name": "Lock Keys",           "desc": "Wskaźnik Caps/Num Lock",        "active": True},
+    {"uuid": "auto-move-windows@gnome-shell-extensions.gcampax.github.com","name":"Auto Move Windows",   "desc": "Auto-przenoszenie okien",        "active": True},
+    {"uuid": "freon@UshakovVasilii_Github.yahoo.com",                     "name": "Freon",               "desc": "Temperatury w topbarze",         "active": True},
+    {"uuid": "trayIconsReloaded@selfmade.pl",                             "name": "Tray Icons Reloaded", "desc": "Ikony w zasobniku systemowym",  "active": True},
+    {"uuid": "ddterm@amezin.github.com",                                  "name": "ddterm",              "desc": "Dropdown terminal",              "active": True},
+    {"uuid": "vertical-workspaces@G-dH.github.com",                      "name": "Vertical Workspaces", "desc": "Pionowe przestrzenie robocze",  "active": True},
+    {"uuid": "EasyScreenCast@iacopodeenosee.gmail.com",                   "name": "EasyScreenCast",      "desc": "Nagrywanie ekranu",              "active": True},
+    {"uuid": "gnome-ui-tune@itstime.tech",                                "name": "GNOME UI Tune",       "desc": "Poprawki UI GNOME",              "active": True},
+    {"uuid": "advanced-weather@sanjai.com",                               "name": "Advanced Weather",    "desc": "Pogoda w topbarze",              "active": True},
+    {"uuid": "reboottouefi@ubaygd.com",                                   "name": "Reboot to UEFI",      "desc": "Restart do UEFI z menu",        "active": True},
+    {"uuid": "ShutdownTimer@deminder",                                    "name": "Shutdown Timer",      "desc": "Timer wyłączenia komputera",    "active": True},
+    {"uuid": "gamemodeshellextension@trsnaqe.com",                        "name": "GameMode Shell",      "desc": "Integracja GameMode w Shell",    "active": True},
+    {"uuid": "compiz-windows-effect@hermes83.github.com",                 "name": "Compiz Effect",       "desc": "Efekty galaretki okien",        "active": True},
+    {"uuid": "system-rpg@conan513",                                       "name": "System RPG",          "desc": "Grywalizacja systemu",           "active": True},
+    {"uuid": "fq@megh",                                                   "name": "fq",                  "desc": "Rozszerzenie fq",                "active": True},
+    {"uuid": "blur-my-shell@aunetx",                                      "name": "Blur My Shell",       "desc": "Rozmycie tła Shell",             "active": False},
+    {"uuid": "weatheroclock@CleoMenezesJr.github.io",                     "name": "Weather O'Clock",     "desc": "Zegar z pogodą",                 "active": False},
+    {"uuid": "dash-to-dock@micxgx.gmail.com",                             "name": "Dash to Dock",        "desc": "Dock na wzór macOS",             "active": False},
+    {"uuid": "dash-to-panel@jderose9.github.com",                         "name": "Dash to Panel",       "desc": "Pasek zadań Windows-like",      "active": False},
 ]
 
 ICON_THEMES = [
@@ -390,372 +284,11 @@ def ensure_aur_helper_cmds():
 
 def aur_install_command(pkgs):
     helper = find_aur_helper() or 'paru'
-    return [helper, '-S', '--noconfirm', '--needed'] + list(pkgs)
+    return [helper, '-S', '--noconfirm'] + list(pkgs)
 
 def cmd_needs_privilege(cmd):
-    tokens = list(cmd) if isinstance(cmd, (list, tuple)) else [cmd]
-    if any(t in ('pkexec', 'sudo', 'paru', 'yay') for t in tokens):
-        return True
-    blob = ' '.join(str(t) for t in tokens)
-    return 'pkexec' in blob or 'sudo' in blob
-
-def dedupe(items):
-    out = []
-    for item in items:
-        if item not in out:
-            out.append(item)
-    return out
-
-def flatpak_installed(app_id):
-    if not shutil.which('flatpak'):
-        return False
-    for args in (['flatpak', 'info', '--user', app_id], ['flatpak', 'info', app_id]):
-        if subprocess.run(args, capture_output=True).returncode == 0:
-            return True
-    return False
-
-def flathub_ready():
-    if not shutil.which('flatpak'):
-        return False
-    result = subprocess.run(['flatpak', 'remotes'], capture_output=True, text=True)
-    for line in result.stdout.splitlines():
-        parts = line.split()
-        if parts and parts[0] == 'flathub':
-            return True
-    return False
-
-def command_exists(name):
-    if shutil.which(name):
-        return True
-    return os.path.isfile(os.path.expanduser(f'~/.local/bin/{name}')) or os.path.isfile(
-        os.path.expanduser(f'~/.grok/bin/{name}'))
-
-def photogimp_present():
-    path = os.path.expanduser('~/.local/share/applications/gimp.desktop')
-    try:
-        with open(path, encoding='utf-8', errors='replace') as handle:
-            text = handle.read()
-    except OSError:
-        return False
-    return 'PhotoGIMP' in text and 'Icon=photogimp' in text
-
-def is_program_installed(prog):
-    source = prog['source']
-    if source == 'unavailable':
-        return False
-    if source == 'settler':
-        return True
-    if prog.get('extra') == 'photogimp' and not photogimp_present():
-        return False
-    pkgs = prog.get('pkgs') or []
-    if pkgs and not all(is_pkg_installed(pkg) for pkg in pkgs):
-        return False
-    if source == 'flatpak':
-        return flatpak_installed(prog['flatpak'])
-    if source == 'grok':
-        return command_exists('grok')
-    if source == 'github':
-        checks = {
-            'wallora': lambda: flatpak_installed('org.wallora.Wallora'),
-            'lustro': lambda: flatpak_installed('pl.gorian.Lustro'),
-            'perun': lambda: command_exists('perun'),
-            'kontur': lambda: command_exists('kontur'),
-            'ogniwo': lambda: command_exists('ogniwo'),
-            'razer': lambda: command_exists('razer-reactive') or command_exists('razer-reactive-gui'),
-            'lovense': lambda: command_exists('lovense-controller'),
-            'gitadder': lambda: command_exists('gitadder'),
-            'focusrite': lambda: command_exists('focusrite-monitor'),
-            'klucznik': lambda: command_exists('klucznik'),
-        }
-        return checks[prog['github']]()
-    return True
-
-def source_tag(prog):
-    source = prog['source']
-    if source == 'unavailable':
-        return 'brak', 'tag-unavailable'
-    if source == 'settler':
-        return 'github', 'tag-github'
-    return source, f'tag-{source}'
-
-def tools_missing():
-    missing = []
-    for pkg in ('git', 'curl', 'base-devel', 'flatpak'):
-        if not is_pkg_installed(pkg):
-            missing.append(pkg)
-    if not find_aur_helper():
-        missing.append('paru')
-    if not shutil.which('gext'):
-        missing.append('gext')
-    if not flathub_ready():
-        missing.append('Flathub')
-    return missing
-
-def tool_setup_commands():
-    """git, kompilator AUR, flatpak, Flathub, paru i gext — jeden przycisk na start."""
-    cmds = []
-    pkgs = [pkg for pkg in ('git', 'curl', 'base-devel', 'flatpak') if not is_pkg_installed(pkg)]
-    if not find_aur_helper():
-        pkgs.append('paru')
-    if pkgs:
-        cmds.append(('Narzędzia', ['pkexec', 'pacman', '-S', '--needed', '--noconfirm'] + pkgs))
-    cmds.append((
-        'Flathub',
-        ['bash', '-c',
-         'command -v flatpak >/dev/null || { echo "Najpierw musi wejść pakiet flatpak"; exit 1; }\n'
-         'flatpak remote-add --user --if-not-exists flathub '
-         'https://dl.flathub.org/repo/flathub.flatpakrepo'],
-    ))
-    if not shutil.which('gext'):
-        cmds.append(('gnome-extensions-cli', aur_install_command(['gnome-extensions-cli'])))
-    return cmds
-
-SUDO_SHIM = r"""
-shim=$(mktemp -d)
-trap 'rm -rf "$shim"' EXIT
-cat > "$shim/sudo" << 'SHIM'
-#!/bin/bash
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --) shift; break ;;
-    -A|--askpass|-E|--preserve-env|-n|--non-interactive|-S) shift ;;
-    *) break ;;
-  esac
-done
-[[ $# -gt 0 ]] || { echo "sudo: brak polecenia" >&2; exit 1; }
-exec pkexec "$@"
-SHIM
-chmod +x "$shim/sudo"
-export PATH="$shim:$PATH"
-"""
-
-def github_clone_snippet(repo_url, folder):
-    return f'''
-dest="$HOME/Projekty/{folder}"
-case "$dest" in
-  "$HOME"/Projekty/*) ;;
-  *) echo "Zła ścieżka: $dest" >&2; exit 1 ;;
-esac
-mkdir -p "$HOME/Projekty"
-if [[ -d "$dest/.git" ]]; then
-  git -C "$dest" pull --ff-only || echo "Zostawiam lokalną kopię: $dest"
-elif [[ -f "$dest/install.sh" ]]; then
-  echo "Używam istniejącego katalogu: $dest"
-else
-  rm -rf "$dest"
-  git clone --depth 1 "{repo_url}" "$dest"
-fi
-'''
-
-def curl_install_script(url, shim=False):
-    body = 'set -euo pipefail\n'
-    if shim:
-        body += SUDO_SHIM + '\n'
-    body += f'curl -fsSL "{url}" | bash\n'
-    return body
-
-def github_install_script(kind):
-    if kind == 'perun':
-        return 'set -euo pipefail\n' + github_clone_snippet(
-            'https://github.com/GorianWaco/perun.git', 'perun') + '\nbash "$dest/install.sh" --no-deps\n'
-    if kind == 'kontur':
-        return 'set -euo pipefail\n' + github_clone_snippet(
-            'https://github.com/GorianWaco/kontur.git', 'kontur') + '\nbash "$dest/install.sh"\n'
-    if kind == 'ogniwo':
-        return 'set -euo pipefail\n' + github_clone_snippet(
-            'https://github.com/GorianWaco/ogniwo.git', 'ogniwo') + '\nbash "$dest/install.sh"\n'
-    if kind == 'gitadder':
-        return 'set -euo pipefail\n' + github_clone_snippet(
-            'https://github.com/GorianWaco/gitadder.git', 'gitadder') + (
-            '\nbash "$dest/install.sh" --no-deps --skip-auth-check\n')
-    if kind == 'focusrite':
-        return 'set -euo pipefail\n' + github_clone_snippet(
-            'https://github.com/GorianWaco/focusrite-monitor.git', 'focusrite-monitor') + (
-            '\nbash "$dest/install.sh"\n')
-    if kind == 'klucznik':
-        return 'set -euo pipefail\n' + github_clone_snippet(
-            'https://github.com/GorianWaco/klucznik.git', 'klucznik') + '\nbash "$dest/install.sh"\n'
-    if kind == 'razer':
-        return 'set -euo pipefail\n' + github_clone_snippet(
-            'https://github.com/GorianWaco/Razer-Reactive.git', 'Razer-Reactive') + r'''
-exec pkexec env SUDO_USER="$USER" USER="$USER" HOME="$HOME" LOGNAME="$USER" \
-  bash -c 'cd "$1" && ./install.sh' settler-razer "$dest"
-'''
-    if kind == 'lovense':
-        return curl_install_script(
-            'https://raw.githubusercontent.com/GorianWaco/max2-controller/main/install.sh', shim=True)
-    if kind == 'wallora':
-        return curl_install_script(
-            'https://raw.githubusercontent.com/GorianWaco/wallora-v2/main/install.sh', shim=True)
-    if kind == 'lustro':
-        return r'''
-set -euo pipefail
-tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
-json=$(curl -fsSL https://api.github.com/repos/GorianWaco/lustro/releases/latest)
-url=$(printf '%s' "$json" | python3 -c 'import json,sys; rel=json.load(sys.stdin); print(next(a["browser_download_url"] for a in rel["assets"] if str(a.get("name","")).endswith(".flatpak")))')
-curl -fsSL -L -o "$tmp/Lustro.flatpak" "$url"
-flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak install --user -y "$tmp/Lustro.flatpak"
-'''
-    if kind == 'grok':
-        return 'set -euo pipefail\ncurl -fsSL https://x.ai/cli/install.sh | bash\n'
-    raise KeyError(kind)
-
-def photogimp_command():
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    icons = os.path.join(root, 'share', 'photogimp')
-    script = r'''
-set -euo pipefail
-src="$1"
-dest="$HOME/.local/share/icons/hicolor"
-[[ -d "$src" ]] || { echo "Brak ikon PhotoGIMP: $src" >&2; exit 1; }
-mkdir -p "$HOME/.local/share/applications" "$dest"
-for size in 16x16 32x32 48x48 64x64 128x128 256x256 512x512; do
-  mkdir -p "$dest/$size/apps"
-  cp -a "$src/$size/photogimp.png" "$dest/$size/apps/photogimp.png"
-done
-if [[ -f "$src/photogimp.png" ]]; then
-  cp -a "$src/photogimp.png" "$dest/photogimp.png"
-fi
-cat > "$HOME/.local/share/applications/gimp.desktop" << 'EOF'
-[Desktop Entry]
-Version=1.1
-Type=Application
-Name=PhotoGIMP
-GenericName[pl]=Edytor obrazów
-Comment[pl]=Skrót PhotoGIMP uruchamia systemowy GIMP
-Icon=photogimp
-Exec=gimp %U
-TryExec=gimp
-Terminal=false
-Categories=Graphics;2DGraphics;RasterGraphics;GTK;
-StartupNotify=true
-StartupWMClass=gimp
-EOF
-if command -v update-desktop-database >/dev/null 2>&1; then
-  update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
-fi
-echo "Skrót PhotoGIMP uruchamia systemowy GIMP. Konfiguracja GIMP zostaje bez zmian."
-'''
-    return ('Skrót PhotoGIMP', ['bash', '-c', script, 'photogimp', icons])
-
-def openrazer_followup():
-    user = pwd.getpwuid(os.getuid()).pw_name
-    script = r'''
-set -euo pipefail
-user="$1"
-pkexec bash -c 'getent group plugdev >/dev/null && gpasswd -a "$1" plugdev || true; getent group openrazer >/dev/null && gpasswd -a "$1" openrazer || true' settler-openrazer "$user"
-systemctl --user enable --now openrazer-daemon || echo "Usługa openrazer-daemon włączy się po przelogowaniu."
-echo "Grupy plugdev i openrazer zaczną działać po wylogowaniu i zalogowaniu."
-'''
-    return ('Grupy OpenRazer', ['bash', '-c', script, 'openrazer', user])
-
-def commands_for_programs(progs):
-    pacman, aur, flatpaks = [], [], []
-    scripts = []
-    extras = []
-    for prog in progs:
-        source = prog['source']
-        if source == 'pacman':
-            pacman.extend(prog.get('pkgs') or [])
-        elif source == 'aur':
-            aur.extend(prog.get('pkgs') or [])
-        elif source == 'flatpak':
-            flatpaks.append(prog['flatpak'])
-        elif source in ('github', 'grok'):
-            scripts.append(prog)
-        pacman.extend(prog.get('prep') or [])
-        if prog.get('extra'):
-            extras.append(prog['extra'])
-
-    needs_flatpak = bool(flatpaks) or any(prog.get('github') in ('wallora', 'lustro') for prog in scripts)
-    if needs_flatpak and not shutil.which('flatpak'):
-        pacman.append('flatpak')
-    if scripts and not is_pkg_installed('curl'):
-        pacman.append('curl')
-
-    cmds = []
-    if aur:
-        pkgs = ['base-devel', 'git']
-        if not find_aur_helper():
-            pkgs.insert(0, 'paru')
-        missing = [pkg for pkg in pkgs if pkg != 'paru' and not is_pkg_installed(pkg)]
-        if not find_aur_helper():
-            missing.insert(0, 'paru')
-        if missing:
-            cmds.append(('Narzędzia AUR', ['pkexec', 'pacman', '-S', '--needed', '--noconfirm'] + dedupe(missing)))
-    pacman = dedupe(pacman)
-    aur = dedupe(aur)
-    if pacman:
-        cmds.append(('Instalacja (pacman)', ['pkexec', 'pacman', '-S', '--needed', '--noconfirm'] + pacman))
-    if aur:
-        helper = find_aur_helper() or 'paru'
-        cmds.append((f'Instalacja AUR ({helper})', aur_install_command(aur)))
-    if needs_flatpak:
-        cmds.append((
-            'Flathub',
-            ['bash', '-c',
-             'flatpak remote-add --user --if-not-exists flathub '
-             'https://dl.flathub.org/repo/flathub.flatpakrepo'],
-        ))
-    if flatpaks:
-        cmds.append(('Flatpak', ['flatpak', 'install', '--user', '-y', 'flathub'] + flatpaks))
-    labels = {
-        'perun': 'Perun',
-        'kontur': 'Kontur',
-        'ogniwo': 'Ogniwo',
-        'gitadder': 'GITADDER',
-        'focusrite': 'Focusrite Monitor',
-        'klucznik': 'Klucznik',
-        'razer': 'Razer Reactive',
-        'lovense': 'Lovense Controller',
-        'wallora': 'Wallora 2',
-        'lustro': 'Lustro',
-        'grok': 'Grok Build',
-    }
-    for prog in scripts:
-        kind = prog.get('github') or 'grok'
-        cmds.append((labels[kind], ['bash', '-c', github_install_script(kind)]))
-    if 'photogimp' in extras:
-        cmds.append(photogimp_command())
-    if 'openrazer' in extras:
-        cmds.append(openrazer_followup())
-    return cmds
-
-def extension_install_commands():
-    cmds = []
-    if not shutil.which('gext'):
-        cmds.extend(tool_setup_commands())
-    for ext in EXTENSIONS:
-        uuid = ext['uuid']
-        name = ext['name']
-        if ext.get('source') == 'github':
-            clone = github_clone_snippet(
-                'https://github.com/GorianWaco/iskra-dropdown.git', 'iskra-dropdown')
-            script = f'''
-set -euo pipefail
-dir="$HOME/.local/share/gnome-shell/extensions/{uuid}"
-if [[ -f "$dir/metadata.json" ]]; then
-  gnome-extensions enable "{uuid}" || true
-  echo "Już zainstalowane: {name}"
-else
-{clone}
-  bash "$dest/install.sh"
-fi
-'''
-        else:
-            script = f'''
-set -euo pipefail
-if gnome-extensions info "{uuid}" >/dev/null 2>&1; then
-  echo "Już zainstalowane: {name}"
-else
-  gext install "{uuid}"
-fi
-gnome-extensions enable "{uuid}" || gext enable "{uuid}" || echo "Włączy się po wylogowaniu: {name}"
-'''
-        cmds.append((name, ['bash', '-c', script]))
-    return cmds
+    tokens = cmd if isinstance(cmd, (list, tuple)) else [cmd]
+    return any(t in ('pkexec', 'sudo', 'paru', 'yay') for t in tokens)
 
 def wrap_privileged(cmd):
     """paru/yay/sudo → pkexec, żeby GNOME zapytał o FIDO2 zamiast hasła sudo."""
@@ -797,352 +330,6 @@ def get_wallpapers():
                         seen.add(p)
                         paths.append(p)
     return sorted(paths)
-
-# ──────────────────────────────────────────────────────────────
-# STEAM — lokalne pliki VDF
-# Klucze pochodzą z klienta (steamui.so) i z plików tego konta:
-#   sharedconfig  SteamDefaultDialog = #app_games (biblioteka)
-#   registry      language
-#   config.vdf    ShaderCacheManager/EnableShaderBackgroundProcessing
-#                 ShaderCacheManager/DisableShaderCache  ("0" = bufor włączony)
-#                 AllowDownloadsDuringGameplay
-#   localconfig   system/EnableGameOverlay
-#                 system/NetworkingAllowShareIP  0 domyślne, 1 nigdy, 2 znajomi, 3 zawsze
-#                 streaming_v2/EnableStreaming
-#                 LibraryLowPerfMode, LibraryDisableCommunityContent
-#                 GameRecording/BackgroundRecordMode  0 wyłączone, 1 zawsze, 2 ręcznie
-# ──────────────────────────────────────────────────────────────
-
-STEAM_START_PAGES = [
-    ("Biblioteka", "#app_games"),
-    ("Sklep", "#app_store"),
-    ("Aktualności", "#app_news"),
-    ("Aktywność znajomych", "#steam_menu_friend_activity"),
-    ("Społeczność", "#steam_menu_community"),
-]
-
-STEAM_LANGUAGES = [
-    ("Polski", "polish"),
-    ("English", "english"),
-    ("Deutsch", "german"),
-    ("Français", "french"),
-    ("Español", "spanish"),
-    ("Español (Latinoamérica)", "latam"),
-    ("Italiano", "italian"),
-    ("Português", "portuguese"),
-    ("Português (Brasil)", "brazilian"),
-    ("Nederlands", "dutch"),
-    ("Čeština", "czech"),
-    ("Magyar", "hungarian"),
-    ("Română", "romanian"),
-    ("Svenska", "swedish"),
-    ("Dansk", "danish"),
-    ("Suomi", "finnish"),
-    ("Norsk", "norwegian"),
-    ("Türkçe", "turkish"),
-    ("Русский", "russian"),
-    ("Українська", "ukrainian"),
-    ("日本語", "japanese"),
-    ("한국어", "koreana"),
-    ("简体中文", "schinese"),
-    ("繁體中文", "tchinese"),
-    ("ไทย", "thai"),
-    ("Tiếng Việt", "vietnamese"),
-    ("Bahasa Indonesia", "indonesian"),
-]
-
-STEAM_NETWORKING = [
-    ("Domyślne", "0"),
-    ("Nigdy", "1"),
-    ("Tylko znajomi", "2"),
-    ("Zawsze", "3"),
-]
-
-STEAM_RECORDING = [
-    ("Wyłączone", "0"),
-    ("Tylko ręcznie", "2"),
-    ("Zawsze w tle", "1"),
-]
-
-
-def steam_is_running():
-    for name in ("steam", "steamwebhelper"):
-        try:
-            result = subprocess.run(["pgrep", "-x", name], capture_output=True)
-        except FileNotFoundError:
-            return False
-        if result.returncode == 0:
-            return True
-    return False
-
-
-def steam_layout():
-    """Ścieżki natywnego klienta. Puste pola, gdy pliku nie ma."""
-    root = os.path.realpath(os.path.expanduser("~/.steam/root"))
-    if not os.path.isdir(root):
-        root = os.path.realpath(os.path.expanduser("~/.local/share/Steam"))
-    if not os.path.isdir(root):
-        root = None
-
-    registry = os.path.expanduser("~/.steam/registry.vdf")
-    if not os.path.isfile(registry) and root:
-        alt = os.path.join(root, "registry.vdf")
-        registry = alt if os.path.isfile(alt) else None
-    elif not os.path.isfile(registry):
-        registry = None
-
-    config = os.path.join(root, "config", "config.vdf") if root else None
-    if config and not os.path.isfile(config):
-        config = None
-
-    account = None
-    newest = -1
-    if root:
-        user_root = os.path.join(root, "userdata")
-        if os.path.isdir(user_root):
-            for name in os.listdir(user_root):
-                local = os.path.join(user_root, name, "config", "localconfig.vdf")
-                if os.path.isfile(local):
-                    mtime = os.path.getmtime(local)
-                    if mtime >= newest:
-                        newest = mtime
-                        account = name
-
-    local = shared = None
-    if root and account:
-        local_path = os.path.join(root, "userdata", account, "config", "localconfig.vdf")
-        shared_path = os.path.join(root, "userdata", account, "7", "remote", "sharedconfig.vdf")
-        local = local_path if os.path.isfile(local_path) else None
-        shared = shared_path if os.path.isfile(shared_path) else None
-
-    return {
-        "root": root,
-        "account": account,
-        "registry": registry,
-        "config": config,
-        "local": local,
-        "shared": shared,
-    }
-
-
-def _vdf_skip(text, index):
-    while index < len(text) and text[index] in " \t\r\n":
-        index += 1
-    return index
-
-
-def _vdf_string(text, index):
-    if index >= len(text) or text[index] != '"':
-        raise ValueError("Uszkodzony plik VDF: oczekiwano cudzysłowu")
-    index += 1
-    start = index
-    length = len(text)
-    while index < length:
-        char = text[index]
-        if char == "\\":
-            index += 2
-            continue
-        if char == '"':
-            return text[start:index], start, index, index + 1
-        index += 1
-    raise ValueError("Uszkodzony plik VDF: niedomknięty napis")
-
-
-def _vdf_unescape(raw):
-    chars = []
-    index = 0
-    while index < len(raw):
-        if raw[index] == "\\" and index + 1 < len(raw):
-            chars.append(raw[index + 1])
-            index += 2
-        else:
-            chars.append(raw[index])
-            index += 1
-    return "".join(chars)
-
-
-def _vdf_escape(value):
-    return str(value).replace("\\", "\\\\").replace('"', '\\"')
-
-
-def _vdf_match_brace(text, open_index):
-    index = open_index + 1
-    depth = 1
-    length = len(text)
-    while index < length:
-        char = text[index]
-        if char == '"':
-            _, _, _, index = _vdf_string(text, index)
-            continue
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return index
-        index += 1
-    raise ValueError("Uszkodzony plik VDF: niedomknięta sekcja")
-
-
-def _vdf_block_entries(text, open_index):
-    index = open_index + 1
-    entries = []
-    length = len(text)
-    while True:
-        index = _vdf_skip(text, index)
-        if index >= length:
-            raise ValueError("Uszkodzony plik VDF: urwany blok")
-        if text[index] == "}":
-            return entries, index
-        name, _, _, index = _vdf_string(text, index)
-        index = _vdf_skip(text, index)
-        if index >= length:
-            raise ValueError("Uszkodzony plik VDF: urwany klucz")
-        if text[index] == "{":
-            close = _vdf_match_brace(text, index)
-            entries.append({"kind": "sec", "name": name, "open": index, "close": close})
-            index = close + 1
-        elif text[index] == '"':
-            raw, inner_start, inner_end, index = _vdf_string(text, index)
-            entries.append({
-                "kind": "key",
-                "name": name,
-                "raw": raw,
-                "start": inner_start,
-                "end": inner_end,
-            })
-        else:
-            raise ValueError("Uszkodzony plik VDF: przy kluczu " + name)
-
-
-def _vdf_root_block(text):
-    index = _vdf_skip(text, 0)
-    name, _, _, index = _vdf_string(text, index)
-    index = _vdf_skip(text, index)
-    if index >= len(text) or text[index] != "{":
-        raise ValueError("Uszkodzony plik VDF: brak głównej sekcji")
-    return name, index
-
-
-def _vdf_locate(text, path):
-    """Zwraca blok sekcji albo None, gdy którejś sekcji po drodze nie ma."""
-    if not path:
-        raise ValueError("Pusta ścieżka sekcji VDF")
-    name, open_index = _vdf_root_block(text)
-    if name != path[0]:
-        return None
-    return _vdf_descend(text, open_index, path[1:])
-
-
-def _vdf_descend(text, open_index, rest):
-    entries, close = _vdf_block_entries(text, open_index)
-    block = {"open": open_index, "close": close, "entries": entries}
-    if not rest:
-        return block
-    for entry in entries:
-        if entry["kind"] == "sec" and entry["name"] == rest[0]:
-            return _vdf_descend(text, entry["open"], rest[1:])
-    return None
-
-
-def vdf_get(text, path, key):
-    block = _vdf_locate(text, path)
-    if not block:
-        return None
-    for entry in block["entries"]:
-        if entry["kind"] == "key" and entry["name"] == key:
-            return _vdf_unescape(entry["raw"])
-    return None
-
-
-def _vdf_indent_at(text, index):
-    line_start = text.rfind("\n", 0, index) + 1
-    end = line_start
-    while end < len(text) and text[end] in " \t":
-        end += 1
-    return text[line_start:end]
-
-
-def _vdf_render(indent, sections, key, value):
-    escaped = _vdf_escape(value)
-    if not sections:
-        return f'{indent}"{key}"\t\t"{escaped}"\n'
-    child = indent + "\t"
-    inner = _vdf_render(child, sections[1:], key, value)
-    name = sections[0]
-    return f'{indent}"{name}"\n{indent}{{\n{inner}{indent}}}\n'
-
-
-def vdf_set(text, path, key, value):
-    """Podmienia jeden klucz. Reszta pliku zostaje bajt w bajt."""
-    if not path:
-        raise ValueError("Pusta ścieżka sekcji VDF")
-    name, open_index = _vdf_root_block(text)
-    if name != path[0]:
-        raise ValueError("Inna sekcja główna VDF: " + name)
-
-    found = [path[0]]
-    node_open = open_index
-    missing = path[1:]
-    for section in path[1:]:
-        entries, _close = _vdf_block_entries(text, node_open)
-        match = None
-        for entry in entries:
-            if entry["kind"] == "sec" and entry["name"] == section:
-                match = entry
-                break
-        if match is None:
-            missing = path[len(found):]
-            break
-        found.append(section)
-        node_open = match["open"]
-        missing = []
-
-    entries, close = _vdf_block_entries(text, node_open)
-    if not missing:
-        for entry in entries:
-            if entry["kind"] == "key" and entry["name"] == key:
-                if _vdf_unescape(entry["raw"]) == str(value):
-                    return text
-                escaped = _vdf_escape(value)
-                return text[:entry["start"]] + escaped + text[entry["end"]:]
-
-    brace_indent = _vdf_indent_at(text, close)
-    blob = _vdf_render(brace_indent + "\t", missing, key, value)
-    line_start = text.rfind("\n", 0, close) + 1
-    return text[:line_start] + blob + text[line_start:]
-
-
-def read_vdf_key(path, sections, key):
-    if not path or not os.path.isfile(path):
-        return None
-    with open(path, encoding="utf-8", newline="") as handle:
-        return vdf_get(handle.read(), sections, key)
-
-
-def write_vdf_keys(path, changes):
-    """changes: lista (sections, key, value). Zapis atomowy, pierwsza kopia .settler.bak."""
-    with open(path, encoding="utf-8", newline="") as handle:
-        original = handle.read()
-    text = original
-    for sections, key, value in changes:
-        text = vdf_set(text, sections, key, value)
-    if text == original:
-        return False
-    backup = path + ".settler.bak"
-    if not os.path.exists(backup):
-        shutil.copy2(path, backup)
-    temporary = path + ".settler.tmp"
-    mode = os.stat(path).st_mode
-    try:
-        with open(temporary, "w", encoding="utf-8", newline="") as handle:
-            handle.write(text)
-        os.chmod(temporary, stat.S_IMODE(mode))
-        os.replace(temporary, path)
-    finally:
-        if os.path.exists(temporary):
-            os.remove(temporary)
-    return True
 
 # ──────────────────────────────────────────────────────────────
 # DIALOG HASŁA
@@ -1371,44 +558,47 @@ class ProgramsPage(Adw.PreferencesPage):
         self.set_title("Programy")
         self.set_icon_name("application-x-executable-symbolic")
 
-        tools = Adw.PreferencesGroup()
-        tools.set_title("Na start")
-        missing = tools_missing()
-        tools_row = Adw.ActionRow()
-        tools_row.set_title("Narzędzia Settlera")
-        if missing:
-            tools_row.set_subtitle("Brakuje: " + ", ".join(missing))
-            tools_btn = Gtk.Button(label="Zainstaluj narzędzia")
-            tools_btn.add_css_class('suggested-action')
-            tools_btn.set_valign(Gtk.Align.CENTER)
-            tools_btn.connect('clicked', self.on_tools)
-            tools_row.add_suffix(tools_btn)
-        else:
-            tools_row.set_subtitle("git, curl, base-devel, paru, flatpak, Flathub i gext są na miejscu")
-        tools.add(tools_row)
-        self.add(tools)
+        group = Adw.PreferencesGroup()
+        group.set_title("Wybierz programy do zainstalowania")
+        group.set_description("Zaznaczone zostaną zainstalowane. Już zainstalowane są wyszarzone.")
 
-        descriptions = {
-            "Programy": "Zaznaczone zostaną zainstalowane. Już zainstalowane są wyszarzone.",
-            "Gry": "Te narzędzia można też dołożyć na stronie Gaming.",
-            "Flatpak": "Flathub oraz własne paczki Flatpak z GitHuba.",
-            "GitHub": "Programy z github.com/GorianWaco. Pozycje „brak” czekają na repozytorium.",
-        }
-        groups = {}
         for prog in PROGRAMS:
-            group = groups.get(prog['group'])
-            if group is None:
-                group = Adw.PreferencesGroup()
-                group.set_title(prog['group'])
-                group.set_description(descriptions.get(prog['group'], ""))
-                groups[prog['group']] = group
-                self.add(group)
-            group.add(self._row(prog))
+            row = Adw.ActionRow()
+            row.set_title(prog['name'])
+
+            installed = is_pkg_installed(prog['pkg'])
+            badge = Gtk.Label()
+            badge.set_margin_start(6)
+            badge.set_valign(Gtk.Align.CENTER)
+
+            if installed:
+                badge.set_label("✓")
+                badge.add_css_class('installed-badge')
+                row.set_subtitle(prog['desc'])
+            else:
+                src_class = 'tag-pacman' if prog['source'] == 'pacman' else 'tag-aur'
+                tag = Gtk.Label(label=prog['source'])
+                tag.add_css_class(src_class)
+                tag.set_valign(Gtk.Align.CENTER)
+                row.add_suffix(tag)
+                row.set_subtitle(prog['desc'])
+
+            check = Gtk.CheckButton()
+            check.set_active(not installed)
+            check.set_sensitive(not installed)
+            self.checks[prog['pkg']] = (check, prog['source'])
+
+            row.add_suffix(badge if installed else check)
+            if not installed:
+                row.set_activatable_widget(check)
+            group.add(row)
+
+        self.add(group)
 
         btn_group = Adw.PreferencesGroup()
         install_row = Adw.ActionRow()
         install_row.set_title("Zainstaluj zaznaczone programy")
-        install_row.set_subtitle("Pacman, AUR, Flatpak i skrypty z GitHuba. Hasła nie wpisuj — tapnij klucz.")
+        install_row.set_subtitle("pacman dla oficjalnych, paru dla AUR")
         btn = Gtk.Button(label="Zainstaluj zaznaczone")
         btn.add_css_class('suggested-action')
         btn.set_valign(Gtk.Align.CENTER)
@@ -1417,57 +607,25 @@ class ProgramsPage(Adw.PreferencesPage):
         btn_group.add(install_row)
         self.add(btn_group)
 
-    def _row(self, prog):
-        row = Adw.ActionRow()
-        row.set_title(prog['name'])
-        row.set_subtitle(prog['desc'])
-        label, css = source_tag(prog)
-        tag = Gtk.Label(label=label)
-        tag.add_css_class(css)
-        tag.set_valign(Gtk.Align.CENTER)
-        row.add_suffix(tag)
-
-        if prog['source'] == 'unavailable':
-            return row
-
-        installed = is_program_installed(prog)
-        if installed:
-            badge = Gtk.Label(label="✓")
-            badge.add_css_class('installed-badge')
-            badge.set_valign(Gtk.Align.CENTER)
-            row.add_suffix(badge)
-        else:
-            check = Gtk.CheckButton()
-            check.set_active(True)
-            check.set_sensitive(True)
-            self.checks[prog['id']] = check
-            row.add_suffix(check)
-            row.set_activatable_widget(check)
-
-        if prog.get('copy'):
-            copy_btn = Gtk.Button()
-            copy_btn.set_icon_name('edit-copy-symbolic')
-            copy_btn.set_valign(Gtk.Align.CENTER)
-            copy_btn.set_tooltip_text("Kopiuj komendę instalacji")
-            copy_btn.connect('clicked', self._copy, prog['copy'])
-            row.add_suffix(copy_btn)
-        return row
-
-    def _copy(self, _btn, text):
-        self.get_display().get_clipboard().set(text)
-
-    def on_tools(self, _):
-        InstallDialog(tool_setup_commands(), 'Narzędzia', parent=self.win).present(self.win)
-
     def on_install(self, _):
-        selected = []
-        by_id = {prog['id']: prog for prog in PROGRAMS}
-        for prog_id, check in self.checks.items():
+        pacman_pkgs, aur_pkgs = [], []
+        for pkg, (check, source) in self.checks.items():
             if check.get_active():
-                selected.append(by_id[prog_id])
-        if not selected:
+                (pacman_pkgs if source == 'pacman' else aur_pkgs).append(pkg)
+
+        if not pacman_pkgs and not aur_pkgs:
             return
-        InstallDialog(commands_for_programs(selected), 'Instalacja programów', parent=self.win).present(self.win)
+
+        cmds = []
+        if pacman_pkgs:
+            cmds.append(("Instalacja (pacman)", ['pkexec', 'pacman', '-S', '--noconfirm'] + pacman_pkgs))
+        if aur_pkgs:
+            cmds.extend(ensure_aur_helper_cmds())
+            helper = find_aur_helper() or 'paru'
+            cmds.append((f"Instalacja AUR ({helper})", aur_install_command(aur_pkgs)))
+
+        d = InstallDialog(cmds, 'Instalacja programów', parent=self.win)
+        d.present(self.win)
 
 # ──────────────────────────────────────────────────────────────
 # STRONA: WYGLĄD
@@ -2108,27 +1266,20 @@ class GamingPage(Adw.PreferencesPage):
         self.set_title("Gaming")
         self.set_icon_name("applications-games-symbolic")
         self.checks = {}
-        self._steam_guard = False
-        self._steam_busy = False
-        self._steam_loaded = {}
-        self._build_steam()
 
         tools_group = Adw.PreferencesGroup()
         tools_group.set_title("Narzędzia gamingowe")
 
         gaming_pkgs = [
-            ("GameMode",         "gamemode",               "Optymalizacja systemu dla gier",      "pacman"),
-            ("GameMode 32-bit",  "lib32-gamemode",         "Wsparcie gier 32-bit",                "pacman"),
-            ("MangoHud",         "mangohud",               "Overlay FPS/GPU/CPU/temp w grach",    "pacman"),
-            ("MangoHud 32-bit",  "lib32-mangohud",         "Wsparcie gier 32-bit",                "pacman"),
-            ("Wine",             "wine",                   "Uruchamianie gier i programów Win",   "pacman"),
-            ("Wine Mono",        "wine-mono",              "Obsługa .NET w Wine",                 "pacman"),
-            ("Winetricks",       "winetricks",             "Skrypty konfiguracji Wine",           "pacman"),
-            ("Lutris",           "lutris",                 "Manager gier Linux",                  "pacman"),
-            ("Heroic Games",     "heroic-games-launcher",  "Launcher Epic Games i GOG",           "pacman"),
-            ("Steam",            "steam",                  "Platforma gamingowa Valve",           "pacman"),
-            ("btop",             "btop",                   "Monitor systemu w terminalu",         "pacman"),
-            ("ProtonUp-Qt",      "protonup-qt",            "Manager wersji GE-Proton",            "pacman"),
+            ("GameMode",         "gamemode",       "Optymalizacja systemu dla gier",      "pacman"),
+            ("GameMode 32-bit",  "lib32-gamemode", "Wsparcie gier 32-bit",                "pacman"),
+            ("MangoHud",         "mangohud",       "Overlay FPS/GPU/CPU/temp w grach",    "pacman"),
+            ("MangoHud 32-bit",  "lib32-mangohud", "Wsparcie gier 32-bit",                "pacman"),
+            ("Wine",             "wine",           "Uruchamianie gier i programów Win",   "pacman"),
+            ("Wine Mono",        "wine-mono",      "Obsługa .NET w Wine",                 "pacman"),
+            ("Winetricks",       "winetricks",     "Skrypty konfiguracji Wine",           "pacman"),
+            ("Lutris",           "lutris",         "Manager gier Linux",                  "pacman"),
+            ("ProtonUp-Qt",      "protonup-qt",    "Manager wersji GE-Proton",            "aur"),
         ]
 
         for name, pkg, desc, src in gaming_pkgs:
@@ -2200,401 +1351,6 @@ class GamingPage(Adw.PreferencesPage):
         kern_group.add(swap_row)
         self.add(kern_group)
 
-    def _build_steam(self):
-        group = Adw.PreferencesGroup()
-        group.set_title("Konfiguracja Steam")
-        group.set_description(
-            "Zapis do plików tego konta. Gdy klient jest włączony, "
-            "Settler pyta, czy go zamknąć — przy wyjściu Steam zapisuje własną kopię ustawień."
-        )
-
-        self._steam_status = Adw.ActionRow()
-        self._steam_status.set_title("Stan")
-        group.add(self._steam_status)
-
-        self._steam_start = self._steam_combo_row(
-            group, "Strona startowa",
-            "Okno po uruchomieniu klienta. Biblioteka to strona gier",
-            STEAM_START_PAGES,
-        )
-        self._steam_lang = self._steam_combo_row(
-            group, "Język klienta",
-            "Obowiązuje po ponownym uruchomieniu Steam",
-            STEAM_LANGUAGES,
-        )
-        if hasattr(self._steam_lang, "set_enable_search"):
-            self._steam_lang.set_enable_search(True)
-
-        self._steam_overlay = self._steam_switch_row(
-            group, "Wyłącz nakładkę Steam w grze",
-            "Bez nakładki i skrótu Shift+Tab w trakcie gry",
-        )
-        self._steam_net = self._steam_combo_row(
-            group, "Funkcje sieciowe Steam",
-            "Kiedy gra może udostępnić adres IP, żeby połączenie było szybsze",
-            STEAM_NETWORKING,
-        )
-        self._steam_remote = self._steam_switch_row(
-            group, "Wyłącz Remote Play",
-            "Bez strumieniowania rozgrywki na inne urządzenia",
-        )
-        self._steam_shader = self._steam_switch_row(
-            group, "Wstępne buforowanie shaderów",
-            "Pobiera gotowe shadery Vulkan i OpenGL pod tę kartę",
-        )
-        self._steam_shader_bg = self._steam_switch_row(
-            group, "Zezwalaj na przetwarzanie shaderów Vulkan w tle",
-            "Kompiluje shadery Vulkan, gdy żadna gra nie jest uruchomiona",
-        )
-        self.add(group)
-
-        extra = Adw.PreferencesGroup()
-        extra.set_title("Dodatkowe ustawienia Steam")
-        extra.set_description(
-            "Zapisują się dopiero po zmianie. Zostawione tak, jak ma je teraz klient."
-        )
-        self._steam_downloads = self._steam_switch_row(
-            extra, "Pobieraj aktualizacje podczas gry",
-            "Pobieranie może iść w tle w trakcie rozgrywki",
-        )
-        self._steam_lowperf = self._steam_switch_row(
-            extra, "Tryb lekkiej biblioteki",
-            "Mniej animacji na liście gier",
-        )
-        self._steam_community = self._steam_switch_row(
-            extra, "Ukryj treści społeczności w bibliotece",
-            "Strona gry otwiera się bez automatycznych materiałów społeczności",
-        )
-        self._steam_recording = self._steam_combo_row(
-            extra, "Nagrywanie rozgrywki",
-            "Ciągłe nagrywanie w tle zajmuje dysk i kartę graficzną",
-            STEAM_RECORDING,
-        )
-        self.add(extra)
-        self._load_steam_widgets()
-
-    def _steam_combo_row(self, group, title, subtitle, pairs):
-        row = Adw.ActionRow()
-        row.set_title(title)
-        row.set_subtitle(subtitle)
-        model = Gtk.StringList.new([label for label, _value in pairs])
-        expression = Gtk.PropertyExpression.new(Gtk.StringObject, None, "string")
-        combo = Gtk.DropDown.new(model, expression)
-        combo._base_pairs = list(pairs)
-        combo._pairs = list(pairs)
-        combo.set_valign(Gtk.Align.CENTER)
-        combo.set_size_request(220, -1)
-        combo._row = row
-        combo.connect("notify::selected", self._steam_changed)
-        row.add_suffix(combo)
-        group.add(row)
-        return combo
-
-    def _steam_switch_row(self, group, title, subtitle):
-        row = Adw.SwitchRow()
-        row.set_title(title)
-        row.set_subtitle(subtitle)
-        row.connect("notify::active", self._steam_changed)
-        group.add(row)
-        return row
-
-    def _steam_changed(self, *_args):
-        if self._steam_guard or self._steam_busy:
-            return
-        self._steam_guard = True
-        if not self._steam_shader.get_active() and self._steam_shader_bg.get_active():
-            self._steam_shader_bg.set_active(False)
-        self._steam_shader_bg.set_sensitive(
-            self._steam_shader.get_active() and self._steam_shader.get_sensitive()
-        )
-        self._steam_guard = False
-        self._apply_steam()
-
-    def _set_combo_value(self, combo, current):
-        pairs = list(combo._base_pairs)
-        known = {value for _label, value in pairs}
-        if current not in known:
-            label = "Zostaw domyślne" if current is None else f"Obecne ({current})"
-            pairs.insert(0, (label, current))
-        labels = [label for label, _value in pairs]
-        combo._pairs = pairs
-        combo.set_model(Gtk.StringList.new(labels))
-        selected = 0
-        for index, (_label, value) in enumerate(pairs):
-            if value == current:
-                selected = index
-                break
-        combo.set_selected(selected)
-
-    def _combo_value(self, combo):
-        index = combo.get_selected()
-        pairs = combo._pairs
-        if index is None or index < 0 or index >= len(pairs):
-            return None
-        return pairs[index][1]
-
-    def _widget_state(self):
-        shader = bool(self._steam_shader.get_active())
-        return {
-            "start": self._combo_value(self._steam_start),
-            "language": self._combo_value(self._steam_lang),
-            "overlay_off": bool(self._steam_overlay.get_active()),
-            "networking": self._combo_value(self._steam_net),
-            "remote_off": bool(self._steam_remote.get_active()),
-            "shader": shader,
-            "shader_bg": bool(self._steam_shader_bg.get_active()) and shader,
-            "downloads": bool(self._steam_downloads.get_active()),
-            "lowperf": bool(self._steam_lowperf.get_active()),
-            "hide_community": bool(self._steam_community.get_active()),
-            "recording": self._combo_value(self._steam_recording),
-        }
-
-    def _load_steam_widgets(self):
-        self._steam_guard = True
-        try:
-            layout = steam_layout()
-            local = layout["local"]
-            config = layout["config"]
-            registry = layout["registry"]
-            shared = layout["shared"]
-
-            steam_root = ["UserLocalConfigStore"]
-            valve = ["InstallConfigStore", "Software", "Valve", "Steam"]
-            roaming = ["UserRoamingConfigStore", "Software", "Valve", "Steam"]
-            reg_steam = ["Registry", "HKCU", "Software", "Valve", "Steam"]
-
-            start = read_vdf_key(shared, roaming, "SteamDefaultDialog")
-            language = read_vdf_key(registry, reg_steam, "language")
-            overlay = read_vdf_key(local, steam_root + ["system"], "EnableGameOverlay")
-            networking = read_vdf_key(local, steam_root + ["system"], "NetworkingAllowShareIP")
-            streaming = read_vdf_key(local, steam_root + ["streaming_v2"], "EnableStreaming")
-            shader_off = read_vdf_key(config, valve + ["ShaderCacheManager"], "DisableShaderCache")
-            shader_bg = read_vdf_key(
-                config, valve + ["ShaderCacheManager"], "EnableShaderBackgroundProcessing")
-            downloads = read_vdf_key(config, valve, "AllowDownloadsDuringGameplay")
-            lowperf = read_vdf_key(local, steam_root, "LibraryLowPerfMode")
-            community = read_vdf_key(local, steam_root, "LibraryDisableCommunityContent")
-            recording = read_vdf_key(local, steam_root + ["GameRecording"], "BackgroundRecordMode")
-
-            self._steam_start._row.set_sensitive(bool(shared))
-            self._steam_lang._row.set_sensitive(bool(registry))
-            local_ok = bool(local)
-            config_ok = bool(config)
-            self._steam_overlay.set_sensitive(local_ok)
-            self._steam_net._row.set_sensitive(local_ok)
-            self._steam_remote.set_sensitive(local_ok)
-            self._steam_lowperf.set_sensitive(local_ok)
-            self._steam_community.set_sensitive(local_ok)
-            self._steam_recording._row.set_sensitive(local_ok)
-            self._steam_shader.set_sensitive(config_ok)
-            self._steam_downloads.set_sensitive(config_ok)
-
-            self._set_combo_value(self._steam_start, start)
-            self._set_combo_value(self._steam_lang, language)
-            self._steam_overlay.set_active(overlay == "0")
-            self._set_combo_value(self._steam_net, networking if networking is not None else "0")
-            self._steam_remote.set_active(streaming == "0")
-            self._steam_shader.set_active(shader_off != "1")
-            self._steam_shader_bg.set_active(shader_bg == "1")
-            self._steam_shader_bg.set_sensitive(config_ok and shader_off != "1")
-            self._steam_downloads.set_active(downloads != "0")
-            self._steam_lowperf.set_active(lowperf == "1")
-            self._steam_community.set_active(community == "1")
-            self._set_combo_value(self._steam_recording, recording)
-            self._steam_loaded = self._widget_state()
-            self._set_default_steam_status(layout)
-        finally:
-            self._steam_guard = False
-
-    def _set_default_steam_status(self, layout=None):
-        layout = layout or steam_layout()
-        if not layout["root"]:
-            self._steam_status.set_subtitle("Nie znaleziono katalogu Steam.")
-            return
-        if not layout["account"]:
-            self._steam_status.set_subtitle("Steam jest, brak katalogu konta w userdata.")
-            return
-        if steam_is_running():
-            state = "Klient działa. Zapis zamknie go przed zmianą plików"
-        else:
-            state = "Klient jest wyłączony"
-        self._steam_status.set_subtitle(f"Konto {layout['account']}. {state}.")
-
-    def _set_steam_status(self, text):
-        self._steam_status.set_subtitle(text)
-
-    def _apply_steam(self):
-        if self._steam_guard or self._steam_busy:
-            return
-        if steam_is_running():
-            self._steam_busy = True
-            self._ask_steam_quit()
-            return
-        self._steam_busy = True
-        self._steam_write_finish(False)
-
-    def _ask_steam_quit(self):
-        dialog = Adw.AlertDialog()
-        dialog.set_heading("Steam jest uruchomiony")
-        dialog.set_body(
-            "Steam zapisuje swoje pliki przy wyjściu. "
-            "Zamknięcie klienta kończy też uruchomioną grę. "
-            "Zamknąć go teraz i zapisać to ustawienie?"
-        )
-        dialog.add_response("cancel", "Anuluj")
-        dialog.add_response("apply", "Zamknij Steam i zapisz")
-        dialog.set_response_appearance("apply", Adw.ResponseAppearance.SUGGESTED)
-        dialog.set_default_response("apply")
-        dialog.set_close_response("cancel")
-        dialog.connect("response", self._on_steam_quit_response)
-        dialog.present(self.win)
-
-    def _on_steam_quit_response(self, _dialog, response):
-        if response != "apply":
-            self._steam_busy = False
-            self._load_steam_widgets()
-            self._set_steam_status("Anulowano. Steam nadal działa.")
-            return
-        self._set_steam_status("Zamykam Steam…")
-        threading.Thread(target=self._quit_steam_and_write, daemon=True).start()
-
-    def _quit_steam_and_write(self):
-        try:
-            subprocess.run(["steam", "-shutdown"], capture_output=True, text=True)
-        except FileNotFoundError:
-            GLib.idle_add(self._steam_fail, "Nie znaleziono polecenia steam.")
-            return
-        deadline = time.time() + 25
-        while time.time() < deadline:
-            if not steam_is_running():
-                break
-            time.sleep(0.5)
-        else:
-            GLib.idle_add(
-                self._steam_fail,
-                "Steam nie zamknął się w ciągu 25 sekund. Nic nie zapisano.",
-            )
-            return
-        self._wait_steam_files()
-        GLib.idle_add(self._steam_write_finish, True)
-
-    def _wait_steam_files(self):
-        path = steam_layout().get("local")
-        if not path:
-            time.sleep(0.4)
-            return
-        last = None
-        stable = 0
-        for _ in range(15):
-            try:
-                mtime = os.path.getmtime(path)
-            except OSError:
-                return
-            if mtime == last:
-                stable += 1
-                if stable >= 2:
-                    return
-            else:
-                stable = 0
-                last = mtime
-            time.sleep(0.3)
-
-    def _steam_fail(self, message):
-        self._steam_busy = False
-        self._load_steam_widgets()
-        self._set_steam_status(message)
-        return False
-
-    def _steam_write_finish(self, closed_steam):
-        try:
-            written = self._write_steam_changes()
-        except Exception as exc:
-            self._steam_busy = False
-            self._load_steam_widgets()
-            self._set_steam_status("Nie zapisano: " + str(exc))
-            return False
-        self._steam_busy = False
-        if written:
-            lead = "Steam zamknięty. " if closed_steam else ""
-            self._set_steam_status(lead + "Zapisane. Uruchom Steam ponownie.")
-            self._steam_loaded = self._widget_state()
-        elif closed_steam:
-            self._set_steam_status("Steam zamknięty. Pliki bez zmian.")
-        else:
-            self._set_steam_status("Bez zmian w plikach.")
-        return False
-
-    def _write_steam_changes(self):
-        layout = steam_layout()
-        state = self._widget_state()
-        loaded = self._steam_loaded
-        grouped = {}
-
-        def queue(path, sections, key, new, old):
-            if not path or new is None or new == old:
-                return
-            grouped.setdefault(path, []).append((sections, key, new))
-
-        roaming = ["UserRoamingConfigStore", "Software", "Valve", "Steam"]
-        reg_steam = ["Registry", "HKCU", "Software", "Valve", "Steam"]
-        reg_global = ["Registry", "HKCU", "Software", "Valve", "Steamsteamglobal"]
-        valve = ["InstallConfigStore", "Software", "Valve", "Steam"]
-        shaders = valve + ["ShaderCacheManager"]
-        root = ["UserLocalConfigStore"]
-
-        queue(layout["shared"], roaming, "SteamDefaultDialog", state["start"], loaded.get("start"))
-        queue(layout["registry"], reg_steam, "language", state["language"], loaded.get("language"))
-        queue(layout["registry"], reg_global, "language", state["language"], loaded.get("language"))
-        queue(
-            layout["config"], shaders, "DisableShaderCache",
-            "0" if state["shader"] else "1",
-            "0" if loaded.get("shader", True) else "1",
-        )
-        queue(
-            layout["config"], shaders, "EnableShaderBackgroundProcessing",
-            "1" if state["shader_bg"] else "0",
-            "1" if loaded.get("shader_bg") else "0",
-        )
-        queue(
-            layout["config"], valve, "AllowDownloadsDuringGameplay",
-            "1" if state["downloads"] else "0",
-            "1" if loaded.get("downloads", True) else "0",
-        )
-        queue(
-            layout["local"], root + ["system"], "EnableGameOverlay",
-            "0" if state["overlay_off"] else "1",
-            "0" if loaded.get("overlay_off") else "1",
-        )
-        queue(
-            layout["local"], root + ["system"], "NetworkingAllowShareIP",
-            state["networking"], loaded.get("networking"),
-        )
-        queue(
-            layout["local"], root + ["streaming_v2"], "EnableStreaming",
-            "0" if state["remote_off"] else "1",
-            "0" if loaded.get("remote_off") else "1",
-        )
-        queue(
-            layout["local"], root, "LibraryLowPerfMode",
-            "1" if state["lowperf"] else "0",
-            "1" if loaded.get("lowperf") else "0",
-        )
-        queue(
-            layout["local"], root, "LibraryDisableCommunityContent",
-            "1" if state["hide_community"] else "0",
-            "1" if loaded.get("hide_community") else "0",
-        )
-        queue(
-            layout["local"], root + ["GameRecording"], "BackgroundRecordMode",
-            state["recording"], loaded.get("recording"),
-        )
-
-        written = []
-        for path, changes in grouped.items():
-            if write_vdf_keys(path, changes):
-                written.append(os.path.basename(path))
-        return written
-
     def _install_tools(self, _):
         pacman, aur = [], []
         for pkg, (check, src) in self.checks.items():
@@ -2602,7 +1358,7 @@ class GamingPage(Adw.PreferencesPage):
                 (pacman if src == 'pacman' else aur).append(pkg)
         cmds = []
         if pacman:
-            cmds.append(("Instalacja (pacman)", ['pkexec', 'pacman', '-S', '--needed', '--noconfirm'] + pacman))
+            cmds.append(("Instalacja (pacman)", ['pkexec', 'pacman', '-S', '--noconfirm'] + pacman))
         if aur:
             cmds.extend(ensure_aur_helper_cmds())
             helper = find_aur_helper() or 'paru'
@@ -2683,15 +1439,16 @@ class ExtensionsPage(Adw.PreferencesPage):
                 inactive_group.add(row)
 
         self.add(active_group)
-        if any(not ext['active'] for ext in EXTENSIONS):
-            self.add(inactive_group)
+        self.add(inactive_group)
 
     def _toggle(self, row, _, uuid):
         action = 'enable' if row.get_active() else 'disable'
         subprocess.run(['gnome-extensions', action, uuid], capture_output=True)
 
     def _install_all(self, _):
-        InstallDialog(extension_install_commands(), 'Instalacja rozszerzeń', parent=self.win).present(self.win)
+        cmds = [(f"Instalacja: {e['name']}", ['gext', 'install', e['uuid']])
+                for e in EXTENSIONS]
+        InstallDialog(cmds, 'Instalacja rozszerzeń', parent=self.win).present(self.win)
 
 # ──────────────────────────────────────────────────────────────
 # STRONA: KEYD

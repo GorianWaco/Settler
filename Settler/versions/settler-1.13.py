@@ -35,7 +35,7 @@ import time
 # WERSJA
 # ──────────────────────────────────────────────────────────────
 
-VERSION = "1.14"
+VERSION = "1.13"
 
 # ──────────────────────────────────────────────────────────────
 # CSS GLOBALNY
@@ -231,10 +231,8 @@ PROGRAMS = [
               "gobject-introspection", "bluez", "bluez-utils", "pipewire",
               "pipewire-audio", "libpulse", "pipewire-pulse"],
      "desc": "Instalacja native z github.com/GorianWaco/max2-controller"},
-    {"id": "klucznik", "name": "Klucznik", "group": "GitHub", "source": "github",
-     "github": "klucznik",
-     "prep": ["git", "python", "python-gobject", "python-cairo", "gtk4", "libadwaita"],
-     "desc": "Sejf FIDO2 i GNOME Keyring. Instalacja z github.com/GorianWaco/klucznik"},
+    {"id": "klucznik", "name": "Klucznik", "group": "GitHub", "source": "unavailable",
+     "desc": "Brak publicznego repozytorium. Sejf kluczy nie idzie na GitHuba bez osobnej decyzji"},
     {"id": "iskra", "name": "Iskra", "group": "GitHub", "source": "unavailable",
      "desc": "Brak repozytorium. Dysk ze źródłami nie jest podmontowany"},
     {"id": "gitadder", "name": "GITADDER", "group": "GitHub", "source": "github",
@@ -465,7 +463,6 @@ def is_program_installed(prog):
             'lovense': lambda: command_exists('lovense-controller'),
             'gitadder': lambda: command_exists('gitadder'),
             'focusrite': lambda: command_exists('focusrite-monitor'),
-            'klucznik': lambda: command_exists('klucznik'),
         }
         return checks[prog['github']]()
     return True
@@ -572,9 +569,6 @@ def github_install_script(kind):
         return 'set -euo pipefail\n' + github_clone_snippet(
             'https://github.com/GorianWaco/focusrite-monitor.git', 'focusrite-monitor') + (
             '\nbash "$dest/install.sh"\n')
-    if kind == 'klucznik':
-        return 'set -euo pipefail\n' + github_clone_snippet(
-            'https://github.com/GorianWaco/klucznik.git', 'klucznik') + '\nbash "$dest/install.sh"\n'
     if kind == 'razer':
         return 'set -euo pipefail\n' + github_clone_snippet(
             'https://github.com/GorianWaco/Razer-Reactive.git', 'Razer-Reactive') + r'''
@@ -707,7 +701,6 @@ def commands_for_programs(progs):
         'ogniwo': 'Ogniwo',
         'gitadder': 'GITADDER',
         'focusrite': 'Focusrite Monitor',
-        'klucznik': 'Klucznik',
         'razer': 'Razer Reactive',
         'lovense': 'Lovense Controller',
         'wallora': 'Wallora 2',
