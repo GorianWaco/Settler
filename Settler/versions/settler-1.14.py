@@ -35,7 +35,7 @@ import time
 # WERSJA
 # ──────────────────────────────────────────────────────────────
 
-VERSION = "1.15"
+VERSION = "1.14"
 
 # ──────────────────────────────────────────────────────────────
 # CSS GLOBALNY
@@ -235,11 +235,8 @@ PROGRAMS = [
      "github": "klucznik",
      "prep": ["git", "python", "python-gobject", "python-cairo", "gtk4", "libadwaita"],
      "desc": "Sejf FIDO2 i GNOME Keyring. Instalacja z github.com/GorianWaco/klucznik"},
-    {"id": "iskra", "name": "Iskra", "group": "GitHub", "source": "github",
-     "github": "iskra",
-     "prep": ["curl", "python", "python-gobject", "python-cairo", "python-pillow",
-              "gtk4", "libadwaita", "udisks2"],
-     "desc": "Wpięcie dysku Iskra w nowy system. Skrypt z github.com/GorianWaco/iskra"},
+    {"id": "iskra", "name": "Iskra", "group": "GitHub", "source": "unavailable",
+     "desc": "Brak repozytorium. Dysk ze źródłami nie jest podmontowany"},
     {"id": "gitadder", "name": "GITADDER", "group": "GitHub", "source": "github",
      "github": "gitadder",
      "prep": ["git", "github-cli", "python", "python-gobject", "libadwaita", "gtk4"],
@@ -469,7 +466,6 @@ def is_program_installed(prog):
             'gitadder': lambda: command_exists('gitadder'),
             'focusrite': lambda: command_exists('focusrite-monitor'),
             'klucznik': lambda: command_exists('klucznik'),
-            'iskra': lambda: command_exists('iskra'),
         }
         return checks[prog['github']]()
     return True
@@ -579,9 +575,6 @@ def github_install_script(kind):
     if kind == 'klucznik':
         return 'set -euo pipefail\n' + github_clone_snippet(
             'https://github.com/GorianWaco/klucznik.git', 'klucznik') + '\nbash "$dest/install.sh"\n'
-    if kind == 'iskra':
-        return curl_install_script(
-            'https://raw.githubusercontent.com/GorianWaco/iskra/main/przywroc.sh', shim=True)
     if kind == 'razer':
         return 'set -euo pipefail\n' + github_clone_snippet(
             'https://github.com/GorianWaco/Razer-Reactive.git', 'Razer-Reactive') + r'''
@@ -715,7 +708,6 @@ def commands_for_programs(progs):
         'gitadder': 'GITADDER',
         'focusrite': 'Focusrite Monitor',
         'klucznik': 'Klucznik',
-        'iskra': 'Iskra',
         'razer': 'Razer Reactive',
         'lovense': 'Lovense Controller',
         'wallora': 'Wallora 2',
